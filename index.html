@@ -15,10 +15,11 @@
 
             //convert to a string and base64 encode it
             var encryptedString = btoa(tea.byteArrayToString(encryptedBytes));
-            return encryptedString
+            return encodeURIComponent(encryptedString)
         }
 
         window.decryptEndpoint = (endpoint, salt) => {
+            endpoint = decodeURIComponent(endpoint)
             var encryptedBytes2 = tea.stringToByteArray(atob(endpoint));
 
             //decrypt
