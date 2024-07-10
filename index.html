@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generation</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="module">
+        import XXTea from 'https://cdn.jsdelivr.net/npm/xxtea-html5@1.0.0/+esm'
+
+        const tea = XXTea()
+        window.encryptEndpoint = (cif, salt) => {
+            var encryptedBytes = tea.encrypt(tea.toBytes(cif), tea.toBytes(salt));
+
+            //convert to a string and base64 encode it
+            var encryptedString = btoa(tea.byteArrayToString(encryptedBytes));
+            return encryptedString
+        }
+
+        window.decryptEndpoint = (endpoint, salt) => {
+            var encryptedBytes2 = tea.stringToByteArray(atob(endpoint));
+
+            //decrypt
+            var decryptedBytes = tea.decrypt(encryptedBytes2, tea.toBytes(salt));
+            var decryptedString = tea.byteArrayToString(decryptedBytes);
+            return decryptedString
+        }
+    </script>
+</head>
+<body style="font-family: sans-serif;">
+    <main>
+        <h1>Generar QR para estudiante</h1>
+        <section>
+            <div>Salt (clave): <strong id="salt">uam2024</strong></div>
+            <div style="margin: 30px 0">
+                <label for="cif">CIF: </label>
+                <input oninput="clearOutput()" id="cif-input" type="text" name="cif">
+                <button style="margin: 0 20px" onclick="generate()">Generar</button>
+            </div>
+
+        </section>
+        <div id="qrcode"></div>
+        <div style="margin-top: 2rem">URL: <strong id="url-output"></strong></div>
+
+        <style>
+            #qrcode {
+                opacity: .1;
+            }
+
+            #qrcode.active {
+                opacity: 1;
+            }
+        </style>
+    </main>
+
+    <script>
+        let qrcode = null
+        function generate() {
+            const salt = document.getElementById('salt').innerText
+            const cif = document.getElementById('cif-input').value
+
+            if (!cif) return
+
+            const endpoint = encryptEndpoint(cif, salt)
+            console.log(endpoint)
+
+            // to test validity
+            const decrypted = decryptEndpoint(endpoint, salt)
+            console.log(decrypted)
+
+            const qrCodeElement = document.getElementById('qrcode')
+
+            const url = `https://graduadosuam.edu.ni/expediente/${endpoint}`
+            if (qrcode === null) {
+                qrcode = new QRCode(qrCodeElement, {
+                    text: url
+                })
+            } else {
+                qrcode.clear()
+                qrcode.makeCode(url)
+            }
+
+            qrCodeElement.classList.add('active')
+
+            document.getElementById('url-output').innerText = url
+        }
+        
+        function clearOutput() {
+            const qrCodeElement = document.getElementById('qrcode')
+            qrCodeElement.classList.remove('active')
+            if (qrcode !== null) {
+                qrcode.clear()
+            }
+
+            document.getElementById('url-output').innerText = ''
+        }
+    </script>
+</body>
+</html>
